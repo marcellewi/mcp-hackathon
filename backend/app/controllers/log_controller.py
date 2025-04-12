@@ -61,3 +61,18 @@ async def get_log_by_id(id: int, db: Session = Depends(get_db)):
         return {"id": log.id, "name": log.filename, "content": log.content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving log: {str(e)}")
+
+
+@router.delete("/all", response_model=dict)
+async def delete_all_logs(db: Session = Depends(get_db)):
+    """
+    Endpoint to delete all log files from the database
+    """
+    try:
+        db.query(LogFile).delete()
+        db.commit()
+        return {"message": "All log files deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting all log files: {str(e)}"
+        )
