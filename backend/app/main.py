@@ -1,9 +1,8 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.controllers.log_controller import router as log_router
 from app.controllers.github_controller import router as github_router
 from app.database import init_db
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Context Processing API")
 
