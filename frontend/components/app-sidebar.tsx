@@ -92,7 +92,7 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
                   <div className="flex items-center flex-1">
                     <Checkbox checked={selectedContexts.includes(context.id)} onCheckedChange={() => handleContextSelect(context.id)} className="mr-2 bg-primary" />
                     <SidebarMenuButton asChild className="flex-1 mr-2">
-                      <Link href={`/context/${context.id}`}>{context.filename}</Link>
+                      <Link href={`/context/${context.id}`}>{context.filename.length > 20 ? context.filename.slice(0, 20) + "..." : context.filename}</Link>
                     </SidebarMenuButton>
                   </div>
                   <CopyButton id={context.id.toString()} />
