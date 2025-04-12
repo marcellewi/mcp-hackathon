@@ -153,7 +153,7 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Logs</SidebarGroupLabel>
+          <SidebarGroupLabel>Elements</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {Object.entries(folderStructure).map(([folderName, { files, isExpanded }]) => (
