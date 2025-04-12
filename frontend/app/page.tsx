@@ -166,7 +166,7 @@ export default function LogUploader() {
 
     try {
       // Replace with your actual API endpoint
-      const apiUrl = "http://localhost:8000/api/logs/upload-logs";
+      const apiUrl = `http://localhost:8000/api/logs/upload-logs/`;
 
       // Create a new JSZip instance
       const zip = new JSZip();
@@ -278,12 +278,10 @@ export default function LogUploader() {
     <div className="container mx-auto py-10 px-4">
       <Card className="w-full max-w-5xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">
-            Log File Uploader & Visualizer
-          </CardTitle>
+          <CardTitle className="text-2xl">Manual Context Manager</CardTitle>
           <CardDescription>
-            Upload a zip file containing logs to view, analyze, and send to the
-            API
+            Easily manage the context you provide to LLMs to improve workflow
+            efficiency and response quality
           </CardDescription>
         </CardHeader>
         <Tabs
@@ -392,7 +390,7 @@ export default function LogUploader() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between mt-4">
               <Button
                 variant="outline"
                 onClick={resetUpload}
@@ -528,7 +526,7 @@ export default function LogUploader() {
                 </>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setActiveTab("upload")}>
                 Back to Upload
               </Button>

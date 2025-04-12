@@ -9,23 +9,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const externalApiUrl = "http://localhost:8000/api/logs/upload-logs";
+    // Make sure the URL ends with a trailing slash to match the backend route
+    const externalApiUrl = "http://localhost:8000/api/logs/upload-logs/";
 
+    // Create a new FormData to send the file
     const externalFormData = new FormData();
     externalFormData.append("zip_file", zipFile);
 
+    console.log("Sending request to:", externalApiUrl);
+
     const externalApiResponse = await fetch(externalApiUrl, {
       method: "POST",
-      headers: {},
       body: externalFormData,
     });
 
     if (!externalApiResponse.ok) {
-      const errorData = await externalApiResponse.json().catch(() => null);
+      const errorText = await externalApiResponse.text();
+      console.error("API Error:", externalApiResponse.status, errorText);
       throw new Error(
-        `External API responded with status: ${externalApiResponse.status}${
-          errorData ? ` - ${JSON.stringify(errorData)}` : ""
-        }`
+        `External API responded with status: ${externalApiResponse.status} - ${errorText}`
       );
     }
 
