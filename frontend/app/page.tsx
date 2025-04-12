@@ -107,7 +107,17 @@ export default function LogUploader() {
     if (e.target.files && e.target.files.length > 0) {
       console.log("Files selected via file input");
       const selectedFiles = Array.from(e.target.files);
-      const zipFiles = selectedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"));
+
+      // Log file details for debugging
+      selectedFiles.forEach((file) => {
+        console.log(`File selected: ${file.name}, type: ${file.type}`);
+      });
+
+      const zipFiles = selectedFiles.filter((file) => {
+        const isZipByType = file.type === "application/zip" || file.type === "application/x-zip-compressed";
+        const isZipByName = file.name.toLowerCase().endsWith(".zip");
+        return isZipByType || isZipByName;
+      });
 
       if (zipFiles.length === 0) {
         console.log("Error: No zip files found in selected files");
