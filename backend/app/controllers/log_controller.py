@@ -1,10 +1,10 @@
 from typing import List
 
+from app.database import get_db
+from app.database.models import LogFile
+from app.services.log_service import LogService
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
-
-from app.database import get_db
-from app.services.log_service import LogService
 
 router = APIRouter()
 
@@ -30,3 +30,19 @@ async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(ge
         raise HTTPException(
             status_code=500, detail=f"Error processing zip file: {str(e)}"
         )
+
+
+@router.get("/", response_model=List[dict])
+async def get_all_logs(db: Session = Depends(get_db)):
+    """
+    Endpoint to retrieve all log files from the database
+    Returns a list of log files with their id, filename, and content
+    """
+    try:
+        logs = db.query(LogFile).all()
+        return [
+            {"id": log.id, "filename": log.filename, "content": log.content}
+            for log in logs
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving logs: {str(e)}")
