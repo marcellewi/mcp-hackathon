@@ -8,9 +8,8 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-const API_BASE_URL = `${
-  process.env.API_URL || "http://localhost:8001"
-}/api/logs`;
+const API_BASE_URL = `${process.env.API_URL ?? "http://localhost:8001"}/api/logs`;
+const maxContentLines = 500;
 
 server.tool("getLatestLog", {}, async () => {
   console.log("Fetching latest log...");
@@ -35,13 +34,11 @@ server.tool("getLatestLog", {}, async () => {
 
     // Assuming logs are returned in order, get the last one
     const latestLog = logs[logs.length - 1];
-    console.log(
-      `Latest log ID: ${latestLog.id}, Filename: ${latestLog.filename}`
-    );
+    console.log(`Latest log ID: ${latestLog.id}, Filename: ${latestLog.filename}`);
 
     // Limit content to 10k lines if needed
     const contentLines = latestLog.content.split("\n");
-    const limitedContent = contentLines.length > 10000 ? contentLines.slice(0, 10000).join("\n") + "\n[Content truncated to 10,000 lines]" : latestLog.content;
+    const limitedContent = contentLines.length > maxContentLines ? contentLines.slice(0, maxContentLines).join("\n") : latestLog.content;
 
     const prompt = [
       "You are an expert data engineer.",
@@ -68,9 +65,7 @@ server.tool("getLatestLog", {}, async () => {
   } catch (error) {
     console.error(`Error in getLatestLog: ${error.message}`);
     return {
-      content: [
-        { type: "text", text: `Error fetching latest log: ${error.message}` },
-      ],
+      content: [{ type: "text", text: `Error fetching latest log: ${error.message}` }],
     };
   }
 });
@@ -89,9 +84,7 @@ server.tool("getLogById", { id: z.number() }, async ({ id }) => {
     }
 
     if (!response.ok) {
-      console.error(
-        `Failed to fetch log with ID ${id}: ${response.statusText}`
-      );
+      console.error(`Failed to fetch log with ID ${id}: ${response.statusText}`);
       throw new Error(`Failed to fetch log: ${response.statusText}`);
     }
 
@@ -100,7 +93,7 @@ server.tool("getLogById", { id: z.number() }, async ({ id }) => {
 
     // Limit content to 10k lines if needed
     const contentLines = log.content.split("\n");
-    const limitedContent = contentLines.length > 10000 ? contentLines.slice(0, 10000).join("\n") + "\n[Content truncated to 10,000 lines]" : log.content;
+    const limitedContent = contentLines.length > maxContentLines ? contentLines.slice(0, maxContentLines).join("\n") : log.content;
 
     const prompt = [
       "You are an expert data engineer.",
