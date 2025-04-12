@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.controllers.log_controller import router as log_router
+from app.controllers.github_controller import router as github_router
 from app.database import init_db
 
-app = FastAPI(title="Log Processing API")
+app = FastAPI(title="Context Processing API")
 
 # Configure CORS
 app.add_middleware(
@@ -17,6 +18,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(log_router, prefix="/api/logs", tags=["logs"])
+app.include_router(github_router, prefix="/api/github", tags=["github"])
 
 
 @app.on_event("startup")

@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     }
 
     // Get the API URL from environment variables
-    const externalApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const externalApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
     const logsEndpoint = `${externalApiUrl}/api/logs/upload-logs/`;
 
     // Create a new FormData to send the file
