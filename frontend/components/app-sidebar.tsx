@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, CopyIcon } from "lucide-react";
+import { PlusIcon, CopyIcon, FolderIcon, FolderOpenIcon, FileIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react";
 import CopyButton from "@/components/copy-button";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -15,9 +15,17 @@ export type Contexts = {
   content: string;
 }[];
 
+type FolderStructure = {
+  [key: string]: {
+    files: Contexts;
+    isExpanded: boolean;
+  };
+};
+
 export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [contexts, setContexts] = useState<Contexts>([]);
   const [selectedContexts, setSelectedContexts] = useState<number[]>([]);
+  const [folderStructure, setFolderStructure] = useState<FolderStructure>({});
   const { toast } = useToast();
 
   // Function to fetch contexts
@@ -30,9 +38,54 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
       }
       const data = await response.json();
       setContexts(data);
+      organizeFilesIntoFolders(data);
     } catch (error) {
       console.error("Failed to fetch contexts:", error);
     }
+  };
+
+  // Function to organize files into a folder structure
+  const organizeFilesIntoFolders = (files: Contexts) => {
+    console.log("Organizing files into folders...");
+
+    const structure: FolderStructure = {
+      "Individual Files": { files: [], isExpanded: true },
+    };
+
+    files.forEach((file) => {
+      const parts = file.filename.split("/");
+
+      // If there's a path separator, it likely came from a zip
+      if (parts.length > 1) {
+        const folderName = parts[0]; // First part is the folder/zip name
+        console.log(`File ${file.filename} belongs to folder: ${folderName}`);
+
+        if (!structure[folderName]) {
+          console.log(`Creating new folder: ${folderName}`);
+          structure[folderName] = { files: [], isExpanded: true };
+        }
+
+        structure[folderName].files.push(file);
+      } else {
+        // Individual files go to their own section
+        console.log(`File ${file.filename} is an individual file`);
+        structure["Individual Files"].files.push(file);
+      }
+    });
+
+    // If there are no individual files, remove that section
+    if (structure["Individual Files"].files.length === 0) {
+      console.log("No individual files found, removing that section");
+      delete structure["Individual Files"];
+    }
+
+    // Log the final structure
+    console.log("Folder structure:", Object.keys(structure).join(", "));
+    Object.entries(structure).forEach(([folder, { files }]) => {
+      console.log(`${folder}: ${files.length} files`);
+    });
+
+    setFolderStructure(structure);
   };
 
   // Initial load of contexts
@@ -63,12 +116,28 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
     });
   };
 
+  const toggleFolder = (folderName: string) => {
+    setFolderStructure((prev) => ({
+      ...prev,
+      [folderName]: {
+        ...prev[folderName],
+        isExpanded: !prev[folderName].isExpanded,
+      },
+    }));
+  };
+
   const copySelectedIds = () => {
     const idsString = `Log IDs: [${selectedContexts.join(", ")}]`;
     navigator.clipboard.writeText(idsString);
     toast({
       title: "Copied log IDs to clipboard",
     });
+  };
+
+  const getFileName = (path: string) => {
+    const parts = path.split("/");
+    const name = parts.length > 1 ? parts[parts.length - 1] : path;
+    return name.length > 12 ? name.slice(0, 12) + "..." : name;
   };
 
   return (
@@ -84,19 +153,67 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Elements</SidebarGroupLabel>
+          <SidebarGroupLabel>Logs</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {contexts.map((context) => (
-                <SidebarMenuItem key={context.id} className="flex items-center justify-between pr-2">
-                  <div className="flex items-center flex-1">
-                    <Checkbox checked={selectedContexts.includes(context.id)} onCheckedChange={() => handleContextSelect(context.id)} className="mr-2 bg-primary" />
-                    <SidebarMenuButton asChild className="flex-1 mr-2">
-                      <Link href={`/context/${context.id}`}>{context.filename.length > 20 ? context.filename.slice(0, 20) + "..." : context.filename}</Link>
-                    </SidebarMenuButton>
-                  </div>
-                  <CopyButton id={context.id.toString()} />
-                </SidebarMenuItem>
+              {Object.entries(folderStructure).map(([folderName, { files, isExpanded }]) => (
+                <div key={folderName}>
+                  {folderName !== "Individual Files" ? (
+                    <>
+                      {/* Folder header */}
+                      <div className="flex items-center cursor-pointer px-2 py-1 rounded hover:bg-muted/50" onClick={() => toggleFolder(folderName)}>
+                        {isExpanded ? (
+                          <>
+                            <FolderOpenIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                            <ChevronDownIcon className="h-3 w-3 mr-1 text-muted-foreground" />
+                          </>
+                        ) : (
+                          <>
+                            <FolderIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                            <ChevronRightIcon className="h-3 w-3 mr-1 text-muted-foreground" />
+                          </>
+                        )}
+                        <span className="text-sm font-medium truncate">{folderName.length > 12 ? folderName.slice(0, 12) + "..." : folderName}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{files.length}</span>
+                      </div>
+
+                      {/* Folder content */}
+                      {isExpanded && (
+                        <div className="ml-4">
+                          {files.map((context) => (
+                            <SidebarMenuItem key={context.id} className="flex items-center justify-between pr-2">
+                              <div className="flex items-center flex-1">
+                                <Checkbox checked={selectedContexts.includes(context.id)} onCheckedChange={() => handleContextSelect(context.id)} className="mr-2 bg-primary" />
+                                <FileIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                                <SidebarMenuButton asChild className="flex-1 mr-2 text-sm">
+                                  <Link href={`/context/${context.id}`}>{getFileName(context.filename).length > 12 ? getFileName(context.filename).slice(0, 12) + "..." : getFileName(context.filename)}</Link>
+                                </SidebarMenuButton>
+                              </div>
+                              <CopyButton id={context.id.toString()} />
+                            </SidebarMenuItem>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* Individual files section */}
+                      <div className="px-2 py-1 text-sm font-medium text-muted-foreground mt-2 mb-1">Individual Files</div>
+                      {files.map((context) => (
+                        <SidebarMenuItem key={context.id} className="flex items-center justify-between pr-2">
+                          <div className="flex items-center flex-1">
+                            <Checkbox checked={selectedContexts.includes(context.id)} onCheckedChange={() => handleContextSelect(context.id)} className="mr-2 bg-primary" />
+                            <FileIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                            <SidebarMenuButton asChild className="flex-1 mr-2 text-sm">
+                              <Link href={`/context/${context.id}`}>{context.filename.length > 16 ? context.filename.slice(0, 16) + "..." : context.filename}</Link>
+                            </SidebarMenuButton>
+                          </div>
+                          <CopyButton id={context.id.toString()} />
+                        </SidebarMenuItem>
+                      ))}
+                    </>
+                  )}
+                </div>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>

@@ -10,30 +10,25 @@ router = APIRouter()
 
 
 @router.post("/upload-logs/", response_model=List[str])
-async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_logs(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
-    Endpoint to upload a zip file containing log files (.txt)
+    Endpoint to upload a file (any type) or a zip containing multiple files
     Returns a list of processed file names
     """
 
-    print(f"Received zip file: {zip_file.filename}")
-    # Check if the uploaded file is a zip
-    if not zip_file.filename.endswith(".zip"):
-        raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+    print(f"Received file: {file.filename}")
 
     # Read the file content
-    content = await zip_file.read()
+    content = await file.read()
 
-    print("Processing zip file content")
-
-    # Process the zip file and save logs to the database
+    # Process the file and save to the database
     try:
-        print("Processing zip file content")
-        saved_files = LogService.process_zip_file(content, db)
+        print(f"Processing file content for {file.filename}")
+        saved_files = LogService.process_file(content, file.filename, db)
         return saved_files
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error processing zip file: {str(e)}"
+            status_code=500, detail=f"Error processing file: {str(e)}"
         )
 
 

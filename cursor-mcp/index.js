@@ -24,6 +24,7 @@ const createLogPrompt = (logs) => {
     "- content: the actual log or data from the file",
     "",
     "You might receive multiple files at once. Please analyze **all of them** before responding.",
+    "Consider searching for where these logs appear in the codebase to understand their context and purpose.",
     "Here are the logs:\n",
   ].join("\n");
 
