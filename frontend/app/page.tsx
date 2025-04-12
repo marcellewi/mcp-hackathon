@@ -3,9 +3,30 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Search, X, ChevronLeft, ChevronRight, FolderOpen, Folder, FileText, ChevronDown } from "lucide-react";
+import {
+  Upload,
+  FileUp,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Folder,
+  FileText,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -30,11 +51,15 @@ export default function LogUploader() {
   const [files, setFiles] = useState<File[]>([]);
   const [extractedLogs, setExtractedLogs] = useState<LogFile[]>([]);
   const [fileGroups, setFileGroups] = useState<FileGroup[]>([]); // For organizing files by zip
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [expandedFolders, setExpandedFolders] = useState<
+    Record<string, boolean>
+  >({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [activeTab, setActiveTab] = useState<"upload" | "visualize">("upload");
   const [selectedLogIndex, setSelectedLogIndex] = useState(0);
@@ -77,7 +102,9 @@ export default function LogUploader() {
 
   useEffect(() => {
     if (selectedLogIndex !== 0 && extractedLogs.length > 0) {
-      console.log(`Selected log changed to: ${extractedLogs[selectedLogIndex]?.name}`);
+      console.log(
+        `Selected log changed to: ${extractedLogs[selectedLogIndex]?.name}`
+      );
     }
   }, [selectedLogIndex, extractedLogs]);
 
@@ -93,7 +120,9 @@ export default function LogUploader() {
       extractedLogs.forEach((file) => {
         if (file.parentZip) {
           // Check if group already exists
-          const existingGroup = groups.find((g) => g.zipName === file.parentZip);
+          const existingGroup = groups.find(
+            (g) => g.zipName === file.parentZip
+          );
 
           if (existingGroup) {
             existingGroup.files.push(file);
@@ -191,22 +220,26 @@ export default function LogUploader() {
           const zipName = file.name.replace(".zip", "");
           const zip = new JSZip();
           const contents = await zip.loadAsync(file);
-          console.log(`Found ${Object.keys(contents.files).length} files in zip`);
+          console.log(
+            `Found ${Object.keys(contents.files).length} files in zip`
+          );
 
-          const filePromises = Object.keys(contents.files).map(async (filename) => {
-            const zipEntry = contents.files[filename];
+          const filePromises = Object.keys(contents.files).map(
+            async (filename) => {
+              const zipEntry = contents.files[filename];
 
-            // Skip directories
-            if (zipEntry.dir) return;
+              // Skip directories
+              if (zipEntry.dir) return;
 
-            const content = await zipEntry.async("string");
-            extractedFiles.push({
-              name: filename,
-              content,
-              parentZip: zipName, // Set the parent zip name
-            });
-            console.log(`Extracted file from zip: ${filename}`);
-          });
+              const content = await zipEntry.async("string");
+              extractedFiles.push({
+                name: filename,
+                content,
+                parentZip: zipName, // Set the parent zip name
+              });
+              console.log(`Extracted file from zip: ${filename}`);
+            }
+          );
 
           await Promise.all(filePromises);
         } else {
@@ -281,7 +314,9 @@ export default function LogUploader() {
         const fileContent = new Blob([logFile.content], { type: "text/plain" });
 
         // Use the full path including parentZip if available
-        const fileName = logFile.parentZip ? `${logFile.parentZip}/${logFile.name}` : logFile.name;
+        const fileName = logFile.parentZip
+          ? `${logFile.parentZip}/${logFile.name}`
+          : logFile.name;
 
         const file = new File([fileContent], fileName, { type: "text/plain" });
 
@@ -304,14 +339,19 @@ export default function LogUploader() {
         // Generate a descriptive zip name
         // Use the first file's name or timestamp as part of the zip name
         const dateStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-        const firstFilePrefix = files.length > 0 ? files[0].name.split(".")[0].replace(/[^a-zA-Z0-9]/g, "_") : "upload";
+        const firstFilePrefix =
+          files.length > 0
+            ? files[0].name.split(".")[0].replace(/[^a-zA-Z0-9]/g, "_")
+            : "upload";
         const zipName = `${firstFilePrefix}_${dateStr}`;
 
         // Add each log file to the zip with proper structure
         extractedLogs.forEach((log, index) => {
           // For files already in a folder structure, preserve it
           // For loose files, don't add any prefix
-          const filePath = log.parentZip ? `${log.parentZip}/${log.name}` : log.name;
+          const filePath = log.parentZip
+            ? `${log.parentZip}/${log.name}`
+            : log.name;
           zip.file(filePath, log.content);
         });
 
@@ -354,7 +394,9 @@ export default function LogUploader() {
       }
     } catch (error) {
       console.error("Error uploading logs:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to upload logs");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to upload logs"
+      );
       setUploadStatus("error");
     } finally {
       setIsUploading(false);
@@ -373,6 +415,14 @@ export default function LogUploader() {
     setSelectedLogIndex(0);
     setSearchQuery("");
     setHighlightedLines([]);
+
+    // Reset the file input element itself
+    const fileInput = document.getElementById(
+      "file-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
   };
 
   const handleSearch = () => {
@@ -399,7 +449,11 @@ export default function LogUploader() {
 
   const renderLogContent = () => {
     if (extractedLogs.length === 0 || !extractedLogs[selectedLogIndex]) {
-      return <div className="text-center py-10 text-muted-foreground">No log content to display</div>;
+      return (
+        <div className="text-center py-10 text-muted-foreground">
+          No log content to display
+        </div>
+      );
     }
 
     const content = extractedLogs[selectedLogIndex].content;
@@ -411,8 +465,15 @@ export default function LogUploader() {
         {lines.map((line, index) => {
           const isHighlighted = highlightedLines.includes(index);
           return (
-            <div key={index} className={`py-0.5 px-2 ${isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""} ${index % 2 === 0 ? "bg-muted/50" : ""}`}>
-              <span className="inline-block w-10 text-muted-foreground mr-2 text-right select-none">{index + 1}</span>
+            <div
+              key={index}
+              className={`py-0.5 px-2 ${
+                isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""
+              } ${index % 2 === 0 ? "bg-muted/50" : ""}`}
+            >
+              <span className="inline-block w-10 text-muted-foreground mr-2 text-right select-none">
+                {index + 1}
+              </span>
               {line || " "}
             </div>
           );
@@ -433,7 +494,10 @@ export default function LogUploader() {
       <Card className="w-full max-w-5xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">Manual Context Manager</CardTitle>
-          <CardDescription>Easily manage the context you provide to LLMs to improve workflow efficiency and response quality</CardDescription>
+          <CardDescription>
+            Easily manage the context you provide to LLMs to improve workflow
+            efficiency and response quality
+          </CardDescription>
         </CardHeader>
         <Tabs
           value={activeTab}
@@ -445,7 +509,10 @@ export default function LogUploader() {
           <div className="px-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger value="visualize" disabled={extractedLogs.length === 0}>
+              <TabsTrigger
+                value="visualize"
+                disabled={extractedLogs.length === 0}
+              >
                 Visualize Logs
               </TabsTrigger>
             </TabsList>
@@ -455,7 +522,11 @@ export default function LogUploader() {
             <CardContent className="space-y-6 pt-6">
               {/* File Upload Area */}
               <div
-                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"}`}
+                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25"
+                }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -464,21 +535,37 @@ export default function LogUploader() {
                   document.getElementById("file-upload")?.click();
                 }}
               >
-                <input id="file-upload" type="file" multiple className="hidden" onChange={handleFileChange} />
+                <input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
                 <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-1">{isDragging ? "Drop your files here" : "Drag & drop your files here"}</h3>
-                <p className="text-sm text-muted-foreground mb-2">or click to browse files (zip files will be extracted)</p>
+                <h3 className="text-lg font-medium mb-1">
+                  {isDragging
+                    ? "Drop your files here"
+                    : "Drag & drop your files here"}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  or click to browse files (zip files will be extracted)
+                </p>
                 {files.length > 0 && (
                   <div className="mt-4 p-2 bg-muted rounded-md inline-block">
                     {files.length === 1 ? (
                       <div className="flex items-center gap-2">
                         <FileUp className="h-4 w-4" />
-                        <span className="text-sm font-medium">{files[0].name}</span>
+                        <span className="text-sm font-medium">
+                          {files[0].name}
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
                         <FileUp className="h-4 w-4" />
-                        <span className="text-sm font-medium">{files.length} files selected</span>
+                        <span className="text-sm font-medium">
+                          {files.length} files selected
+                        </span>
                       </div>
                     )}
                   </div>
@@ -564,7 +651,11 @@ export default function LogUploader() {
                     console.log("Upload Files button clicked");
                     uploadLogs();
                   }}
-                  disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
+                  disabled={
+                    extractedLogs.length === 0 ||
+                    isUploading ||
+                    uploadStatus === "success"
+                  }
                 >
                   {isUploading ? (
                     <>
@@ -593,7 +684,9 @@ export default function LogUploader() {
                           size="icon"
                           onClick={() => {
                             console.log("Previous file button clicked");
-                            setSelectedLogIndex((prev) => Math.max(0, prev - 1));
+                            setSelectedLogIndex((prev) =>
+                              Math.max(0, prev - 1)
+                            );
                           }}
                           disabled={selectedLogIndex === 0}
                         >
@@ -607,9 +700,13 @@ export default function LogUploader() {
                           size="icon"
                           onClick={() => {
                             console.log("Next file button clicked");
-                            setSelectedLogIndex((prev) => Math.min(extractedLogs.length - 1, prev + 1));
+                            setSelectedLogIndex((prev) =>
+                              Math.min(extractedLogs.length - 1, prev + 1)
+                            );
                           }}
-                          disabled={selectedLogIndex === extractedLogs.length - 1}
+                          disabled={
+                            selectedLogIndex === extractedLogs.length - 1
+                          }
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -626,7 +723,9 @@ export default function LogUploader() {
                           className="pl-8"
                           value={searchQuery}
                           onChange={(e) => {
-                            console.log(`Search query changed: "${e.target.value}"`);
+                            console.log(
+                              `Search query changed: "${e.target.value}"`
+                            );
                             setSearchQuery(e.target.value);
                           }}
                           onKeyDown={(e) => {
@@ -664,7 +763,9 @@ export default function LogUploader() {
 
                     {/* File Content */}
                     <div className="border rounded-md">
-                      <ScrollArea className="h-[320px] max-w-[990px] w-full">{renderLogContent()}</ScrollArea>
+                      <ScrollArea className="h-[320px] max-w-[990px] w-full">
+                        {renderLogContent()}
+                      </ScrollArea>
                     </div>
 
                     {/* Search Results Summary */}
@@ -693,7 +794,11 @@ export default function LogUploader() {
                   console.log("Upload Files button clicked from visualize tab");
                   uploadLogs();
                 }}
-                disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
+                disabled={
+                  extractedLogs.length === 0 ||
+                  isUploading ||
+                  uploadStatus === "success"
+                }
               >
                 {isUploading ? (
                   <>
