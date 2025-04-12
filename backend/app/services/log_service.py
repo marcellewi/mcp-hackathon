@@ -28,18 +28,25 @@ class LogService:
             print(f"Found {len(file_list)} files in zip archive")
 
             for file_info in file_list:
-                # Process all files, not just .txt files
-                print(f"Processing file: {file_info.filename}")
-                with zip_ref.open(file_info.filename) as file:
+                # Skip files with no name or that start with .
+                filename = file_info.filename
+                basename = os.path.basename(filename)
+                if not basename or basename.startswith('.'):
+                    print(f"Skipping file: {filename} (no name or starts with .)")
+                    continue
+
+                # Process all valid files
+                print(f"Processing file: {filename}")
+                with zip_ref.open(filename) as file:
                     content = file.read().decode("utf-8", errors="ignore")
 
                 log_file = LogFile(
-                    filename=os.path.basename(file_info.filename), content=content
+                    filename=basename, content=content
                 )
 
                 print(f"Adding log file to database: {log_file.filename}")
                 db.add(log_file)
-                saved_files.append(file_info.filename)
+                saved_files.append(filename)
 
         print(f"Committing {len(saved_files)} log files to database")
         db.commit()

@@ -62,7 +62,7 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Contexts</SidebarGroupLabel>
+          <SidebarGroupLabel>Elements</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {contexts.map((context) => (

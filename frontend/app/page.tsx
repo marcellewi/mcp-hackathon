@@ -2,27 +2,10 @@
 
 import type React from "react";
 
-import { useState } from "react";
-import {
-  Upload,
-  FileUp,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -42,15 +25,52 @@ export default function LogUploader() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [activeTab, setActiveTab] = useState<"upload" | "visualize">("upload");
   const [selectedLogIndex, setSelectedLogIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
   const { toast } = useToast();
+
+  // Log component initialization
+  useEffect(() => {
+    console.log("LogUploader component initialized");
+    return () => {
+      console.log("LogUploader component unmounted");
+    };
+  }, []);
+
+  // Log state changes
+  useEffect(() => {
+    if (files.length > 0) {
+      console.log(`Files selected: ${files.map((f) => f.name).join(", ")}`);
+    }
+  }, [files]);
+
+  useEffect(() => {
+    if (extractedLogs.length > 0) {
+      console.log(`Extracted ${extractedLogs.length} log files`);
+    }
+  }, [extractedLogs]);
+
+  useEffect(() => {
+    if (activeTab !== "upload") {
+      console.log(`Tab changed to: ${activeTab}`);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (uploadStatus !== "idle") {
+      console.log(`Upload status changed to: ${uploadStatus}`);
+    }
+  }, [uploadStatus]);
+
+  useEffect(() => {
+    if (selectedLogIndex !== 0 && extractedLogs.length > 0) {
+      console.log(`Selected log changed to: ${extractedLogs[selectedLogIndex]?.name}`);
+    }
+  }, [selectedLogIndex, extractedLogs]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -65,18 +85,19 @@ export default function LogUploader() {
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
+    console.log("Files dropped");
 
     const droppedFiles = Array.from(e.dataTransfer.files);
-    const zipFiles = droppedFiles.filter(
-      (file) => file.type === "application/zip" || file.name.endsWith(".zip")
-    );
+    const zipFiles = droppedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"));
 
     if (zipFiles.length === 0) {
+      console.log("Error: No zip files found in dropped files");
       setErrorMessage("Please upload a zip file");
       setUploadStatus("error");
       return;
     }
 
+    console.log(`Accepted ${zipFiles.length} zip files`);
     setFiles(zipFiles);
     setUploadStatus("idle");
     setErrorMessage("");
@@ -84,17 +105,18 @@ export default function LogUploader() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      console.log("Files selected via file input");
       const selectedFiles = Array.from(e.target.files);
-      const zipFiles = selectedFiles.filter(
-        (file) => file.type === "application/zip" || file.name.endsWith(".zip")
-      );
+      const zipFiles = selectedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"));
 
       if (zipFiles.length === 0) {
+        console.log("Error: No zip files found in selected files");
         setErrorMessage("Please upload a zip file");
         setUploadStatus("error");
         return;
       }
 
+      console.log(`Accepted ${zipFiles.length} zip files`);
       setFiles(zipFiles);
       setUploadStatus("idle");
       setErrorMessage("");
@@ -104,6 +126,7 @@ export default function LogUploader() {
   const extractLogs = async () => {
     if (files.length === 0) return;
 
+    console.log("Starting log extraction process");
     setIsExtracting(true);
     setExtractedLogs([]);
 
@@ -111,40 +134,39 @@ export default function LogUploader() {
       const extractedFiles: LogFile[] = [];
 
       for (const file of files) {
+        console.log(`Processing zip file: ${file.name}`);
         const zip = new JSZip();
         const contents = await zip.loadAsync(file);
+        console.log(`Found ${Object.keys(contents.files).length} files in zip`);
 
-        const filePromises = Object.keys(contents.files).map(
-          async (filename) => {
-            const zipEntry = contents.files[filename];
+        const filePromises = Object.keys(contents.files).map(async (filename) => {
+          const zipEntry = contents.files[filename];
 
-            // Skip directories
-            if (zipEntry.dir) return;
+          // Skip directories
+          if (zipEntry.dir) return;
 
-            // Check if it's a log file (you can customize this check)
-            if (
-              filename.endsWith(".log") ||
-              filename.endsWith(".txt") ||
-              true
-            ) {
-              const content = await zipEntry.async("string");
-              extractedFiles.push({
-                name: filename,
-                content,
-              });
-            }
+          // Check if it's a log file (you can customize this check)
+          if (filename.endsWith(".log") || filename.endsWith(".txt") || true) {
+            const content = await zipEntry.async("string");
+            extractedFiles.push({
+              name: filename,
+              content,
+            });
+            console.log(`Extracted file: ${filename}`);
           }
-        );
+        });
 
         await Promise.all(filePromises);
       }
 
+      console.log(`Successfully extracted ${extractedFiles.length} log files`);
       setExtractedLogs(extractedFiles);
 
       // If logs were extracted, switch to visualize tab
       if (extractedFiles.length > 0) {
         setActiveTab("visualize");
         setSelectedLogIndex(0);
+        console.log("Switching to visualize tab");
       }
     } catch (error) {
       console.error("Error extracting logs:", error);
@@ -157,16 +179,19 @@ export default function LogUploader() {
       });
     } finally {
       setIsExtracting(false);
+      console.log("Log extraction process completed");
     }
   };
 
   const uploadLogs = async () => {
     if (extractedLogs.length === 0) {
+      console.log("Error: No logs to upload");
       setErrorMessage("No logs to upload");
       setUploadStatus("error");
       return;
     }
 
+    console.log("Starting log upload process");
     setIsUploading(true);
     setUploadProgress(0);
     setUploadStatus("idle");
@@ -174,6 +199,7 @@ export default function LogUploader() {
     try {
       // Replace with your actual API endpoint
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/logs/upload-logs/`;
+      console.log(`Uploading to: ${apiUrl}`);
 
       // Create a new JSZip instance
       const zip = new JSZip();
@@ -185,6 +211,7 @@ export default function LogUploader() {
 
       // Generate the zip file
       const zipBlob = await zip.generateAsync({ type: "blob" });
+      console.log(`Created zip blob of size: ${zipBlob.size} bytes`);
 
       // Create a file from the blob
       const zipFile = new File([zipBlob], "logs.zip", {
@@ -194,6 +221,7 @@ export default function LogUploader() {
       const formData = new FormData();
       formData.append("zip_file", zipFile);
 
+      console.log("Sending upload request to server");
       const response = await fetch(apiUrl, {
         method: "POST",
         body: formData,
@@ -203,11 +231,13 @@ export default function LogUploader() {
         throw new Error(`API responded with status: ${response.status}`);
       }
 
+      console.log("Upload completed successfully");
       setUploadProgress(100);
       setUploadStatus("success");
 
       // Refresh contexts by triggering a reload of context data
       try {
+        console.log("Triggering context refresh");
         // Force refresh by reloading the sidebar data
         const event = new CustomEvent("refreshContexts");
         window.dispatchEvent(event);
@@ -217,16 +247,16 @@ export default function LogUploader() {
       }
     } catch (error) {
       console.error("Error uploading logs:", error);
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to upload logs"
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to upload logs");
       setUploadStatus("error");
     } finally {
       setIsUploading(false);
+      console.log("Log upload process completed");
     }
   };
 
   const resetUpload = () => {
+    console.log("Resetting upload state");
     setFiles([]);
     setExtractedLogs([]);
     setUploadProgress(0);
@@ -240,10 +270,12 @@ export default function LogUploader() {
 
   const handleSearch = () => {
     if (!searchQuery.trim() || !extractedLogs[selectedLogIndex]) {
+      console.log("Search query empty or no log selected");
       setHighlightedLines([]);
       return;
     }
 
+    console.log(`Searching for: "${searchQuery}"`);
     const content = extractedLogs[selectedLogIndex].content;
     const lines = content.split("\n");
     const matchedLineIndices: number[] = [];
@@ -254,35 +286,26 @@ export default function LogUploader() {
       }
     });
 
+    console.log(`Found ${matchedLineIndices.length} matching lines`);
     setHighlightedLines(matchedLineIndices);
   };
 
   const renderLogContent = () => {
     if (extractedLogs.length === 0 || !extractedLogs[selectedLogIndex]) {
-      return (
-        <div className="text-center py-10 text-muted-foreground">
-          No log content to display
-        </div>
-      );
+      return <div className="text-center py-10 text-muted-foreground">No log content to display</div>;
     }
 
     const content = extractedLogs[selectedLogIndex].content;
     const lines = content.split("\n");
+    console.log(`Rendering log with ${lines.length} lines`);
 
     return (
       <div className="font-mono text-sm whitespace-pre-wrap">
         {lines.map((line, index) => {
           const isHighlighted = highlightedLines.includes(index);
           return (
-            <div
-              key={index}
-              className={`py-0.5 px-2 ${
-                isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""
-              } ${index % 2 === 0 ? "bg-muted/50" : ""}`}
-            >
-              <span className="inline-block w-10 text-muted-foreground mr-2 text-right select-none">
-                {index + 1}
-              </span>
+            <div key={index} className={`py-0.5 px-2 ${isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""} ${index % 2 === 0 ? "bg-muted/50" : ""}`}>
+              <span className="inline-block w-10 text-muted-foreground mr-2 text-right select-none">{index + 1}</span>
               {line || " "}
             </div>
           );
@@ -296,24 +319,19 @@ export default function LogUploader() {
       <Card className="w-full max-w-5xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">Manual Context Manager</CardTitle>
-          <CardDescription>
-            Easily manage the context you provide to LLMs to improve workflow
-            efficiency and response quality
-          </CardDescription>
+          <CardDescription>Easily manage the context you provide to LLMs to improve workflow efficiency and response quality</CardDescription>
         </CardHeader>
         <Tabs
           value={activeTab}
-          onValueChange={(value) =>
-            setActiveTab(value as "upload" | "visualize")
-          }
+          onValueChange={(value) => {
+            console.log(`Tab changed to: ${value}`);
+            setActiveTab(value as "upload" | "visualize");
+          }}
         >
           <div className="px-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger
-                value="visualize"
-                disabled={extractedLogs.length === 0}
-              >
+              <TabsTrigger value="visualize" disabled={extractedLogs.length === 0}>
                 Visualize Logs
               </TabsTrigger>
             </TabsList>
@@ -323,39 +341,24 @@ export default function LogUploader() {
             <CardContent className="space-y-6 pt-6">
               {/* File Upload Area */}
               <div
-                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
-                  isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25"
-                }`}
+                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => document.getElementById("file-upload")?.click()}
+                onClick={() => {
+                  console.log("Upload area clicked");
+                  document.getElementById("file-upload")?.click();
+                }}
               >
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept=".zip"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                <input id="file-upload" type="file" accept=".zip" className="hidden" onChange={handleFileChange} />
                 <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-1">
-                  {isDragging
-                    ? "Drop your zip file here"
-                    : "Drag & drop your zip file here"}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  or click to browse files
-                </p>
+                <h3 className="text-lg font-medium mb-1">{isDragging ? "Drop your zip file here" : "Drag & drop your zip file here"}</h3>
+                <p className="text-sm text-muted-foreground mb-2">or click to browse files</p>
                 {files.length > 0 && (
                   <div className="mt-4 p-2 bg-muted rounded-md inline-block">
                     <div className="flex items-center gap-2">
                       <FileUp className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {files[0].name}
-                      </span>
+                      <span className="text-sm font-medium">{files[0].name}</span>
                     </div>
                   </div>
                 )}
@@ -410,14 +413,20 @@ export default function LogUploader() {
             <CardFooter className="flex justify-between mt-4">
               <Button
                 variant="outline"
-                onClick={resetUpload}
+                onClick={() => {
+                  console.log("Reset button clicked");
+                  resetUpload();
+                }}
                 disabled={isExtracting || isUploading}
               >
                 Reset
               </Button>
               <div className="space-x-2">
                 <Button
-                  onClick={extractLogs}
+                  onClick={() => {
+                    console.log("Extract Logs button clicked");
+                    extractLogs();
+                  }}
                   disabled={files.length === 0 || isExtracting || isUploading}
                 >
                   {isExtracting ? (
@@ -430,12 +439,11 @@ export default function LogUploader() {
                   )}
                 </Button>
                 <Button
-                  onClick={uploadLogs}
-                  disabled={
-                    extractedLogs.length === 0 ||
-                    isUploading ||
-                    uploadStatus === "success"
-                  }
+                  onClick={() => {
+                    console.log("Upload Logs button clicked");
+                    uploadLogs();
+                  }}
+                  disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
                 >
                   {isUploading ? (
                     <>
@@ -460,9 +468,10 @@ export default function LogUploader() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() =>
-                          setSelectedLogIndex((prev) => Math.max(0, prev - 1))
-                        }
+                        onClick={() => {
+                          console.log("Previous log button clicked");
+                          setSelectedLogIndex((prev) => Math.max(0, prev - 1));
+                        }}
                         disabled={selectedLogIndex === 0}
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -473,19 +482,16 @@ export default function LogUploader() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() =>
-                          setSelectedLogIndex((prev) =>
-                            Math.min(extractedLogs.length - 1, prev + 1)
-                          )
-                        }
+                        onClick={() => {
+                          console.log("Next log button clicked");
+                          setSelectedLogIndex((prev) => Math.min(extractedLogs.length - 1, prev + 1));
+                        }}
                         disabled={selectedLogIndex === extractedLogs.length - 1}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="text-sm font-medium truncate max-w-[50%]">
-                      {extractedLogs[selectedLogIndex]?.name}
-                    </div>
+                    <div className="text-sm font-medium truncate max-w-[50%]">{extractedLogs[selectedLogIndex]?.name}</div>
                   </div>
 
                   {/* Search */}
@@ -497,9 +503,13 @@ export default function LogUploader() {
                         placeholder="Search in log file..."
                         className="pl-8"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          console.log(`Search query changed: "${e.target.value}"`);
+                          setSearchQuery(e.target.value);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
+                            console.log("Search triggered via Enter key");
                             handleSearch();
                           }
                         }}
@@ -510,6 +520,7 @@ export default function LogUploader() {
                           size="icon"
                           className="absolute right-1 top-1 h-7 w-7"
                           onClick={() => {
+                            console.log("Clear search button clicked");
                             setSearchQuery("");
                             setHighlightedLines([]);
                           }}
@@ -519,7 +530,10 @@ export default function LogUploader() {
                       )}
                     </div>
                     <Button
-                      onClick={handleSearch}
+                      onClick={() => {
+                        console.log("Search button clicked");
+                        handleSearch();
+                      }}
                       disabled={!searchQuery.trim()}
                     >
                       Search
@@ -528,9 +542,7 @@ export default function LogUploader() {
 
                   {/* Log Content */}
                   <div className="border rounded-md">
-                    <ScrollArea className="h-[400px] w-full">
-                      {renderLogContent()}
-                    </ScrollArea>
+                    <ScrollArea className="h-[400px] w-full">{renderLogContent()}</ScrollArea>
                   </div>
 
                   {/* Search Results Summary */}
@@ -544,16 +556,21 @@ export default function LogUploader() {
               )}
             </CardContent>
             <CardFooter className="flex justify-between mt-4">
-              <Button variant="outline" onClick={() => setActiveTab("upload")}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  console.log("Back to Upload button clicked");
+                  setActiveTab("upload");
+                }}
+              >
                 Back to Upload
               </Button>
               <Button
-                onClick={uploadLogs}
-                disabled={
-                  extractedLogs.length === 0 ||
-                  isUploading ||
-                  uploadStatus === "success"
-                }
+                onClick={() => {
+                  console.log("Upload Logs button clicked from visualize tab");
+                  uploadLogs();
+                }}
+                disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
               >
                 {isUploading ? (
                   <>
