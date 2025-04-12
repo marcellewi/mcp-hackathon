@@ -2,7 +2,9 @@
   "mcpServers": {
     "logs": {
       "command": "node",
-      "args": ["/Users/fernandosobral/Developer/mcp-hackathon/cursor-mcp/index.js"]
+      "args": [
+        "/Users/fernandosobral/Developer/mcp-hackathon/cursor-mcp/index.js"
+      ]
     }
   }
 }
