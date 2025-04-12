@@ -39,6 +39,10 @@ server.tool("getLatestLog", {}, async () => {
       `Latest log ID: ${latestLog.id}, Filename: ${latestLog.filename}`
     );
 
+    // Limit content to 10k lines if needed
+    const contentLines = latestLog.content.split("\n");
+    const limitedContent = contentLines.length > 10000 ? contentLines.slice(0, 10000).join("\n") + "\n[Content truncated to 10,000 lines]" : latestLog.content;
+
     const prompt = [
       "You are an expert data engineer.",
       "I will provide you with several logs from different files.",
@@ -54,7 +58,7 @@ server.tool("getLatestLog", {}, async () => {
       `\n--- LOG START ---\n`,
       `id: ${latestLog.id}\n`,
       `filename: ${latestLog.filename}\n`,
-      `content:\n${latestLog.content}\n`,
+      `content:\n${limitedContent}\n`,
       `--- LOG END ---`,
     ].join("\n");
 
@@ -94,6 +98,10 @@ server.tool("getLogById", { id: z.number() }, async ({ id }) => {
     const log = await response.json();
     console.log(`Successfully retrieved log ID ${id}, Filename: ${log.name}`);
 
+    // Limit content to 10k lines if needed
+    const contentLines = log.content.split("\n");
+    const limitedContent = contentLines.length > 10000 ? contentLines.slice(0, 10000).join("\n") + "\n[Content truncated to 10,000 lines]" : log.content;
+
     const prompt = [
       "You are an expert data engineer.",
       "I will provide you with several logs from different files.",
@@ -109,7 +117,7 @@ server.tool("getLogById", { id: z.number() }, async ({ id }) => {
       `\n--- LOG START ---\n`,
       `id: ${log.id}\n`,
       `filename: ${log.name}\n`,
-      `content:\n${log.content}\n`,
+      `content:\n${limitedContent}\n`,
       `--- LOG END ---`,
     ].join("\n");
 

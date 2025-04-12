@@ -15,6 +15,8 @@ async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(ge
     Endpoint to upload a zip file containing log files (.txt)
     Returns a list of processed file names
     """
+
+    print(f"Received zip file: {zip_file.filename}")
     # Check if the uploaded file is a zip
     if not zip_file.filename.endswith(".zip"):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
@@ -22,8 +24,11 @@ async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(ge
     # Read the file content
     content = await zip_file.read()
 
+    print("Processing zip file content")
+
     # Process the zip file and save logs to the database
     try:
+        print("Processing zip file content")
         saved_files = LogService.process_zip_file(content, db)
         return saved_files
     except Exception as e:
@@ -75,4 +80,21 @@ async def delete_all_logs(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error deleting all log files: {str(e)}"
+        )
+
+
+@router.get("/latest", response_model=List[dict])
+async def get_latest_log(db: Session = Depends(get_db)):
+    """
+    Endpoint to retrieve the latest log file from the database
+    Returns a list containing the latest log file with its id, filename, and content
+    """
+    try:
+        log = db.query(LogFile).order_by(LogFile.id.desc()).first()
+        if log is None:
+            raise HTTPException(status_code=404, detail="No log files found")
+        return [{"id": log.id, "filename": log.filename, "content": log.content}]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving latest log: {str(e)}"
         )
