@@ -15,6 +15,8 @@ async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(ge
     Endpoint to upload a zip file containing log files (.txt)
     Returns a list of processed file names
     """
+
+    print(f"Received zip file: {zip_file.filename}")
     # Check if the uploaded file is a zip
     if not zip_file.filename.endswith(".zip"):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
@@ -22,8 +24,11 @@ async def upload_logs(zip_file: UploadFile = File(...), db: Session = Depends(ge
     # Read the file content
     content = await zip_file.read()
 
+    print(f"Processing zip file content")
+
     # Process the zip file and save logs to the database
     try:
+        print(f"Processing zip file content")
         saved_files = LogService.process_zip_file(content, db)
         return saved_files
     except Exception as e:
