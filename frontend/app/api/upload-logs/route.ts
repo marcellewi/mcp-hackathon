@@ -1,48 +1,46 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { logs } = body
+    const formData = await request.formData();
+    const zipFile = formData.get("zip_file") as File;
 
-    if (!logs || !Array.isArray(logs) || logs.length === 0) {
-      return NextResponse.json({ error: "No logs provided or invalid format" }, { status: 400 })
+    if (!zipFile) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Here you would process the logs and send them to your actual REST API
-    // This is a placeholder for your implementation
-    console.log(`Processing ${logs.length} log files`)
+    const externalApiUrl = "http://localhost:8000/api/logs/upload-logs";
 
-    // Example of how you might send the logs to an external API
-    // Replace this with your actual API endpoint
-    /*
-    const externalApiUrl = "https://your-api-endpoint.com/logs"
+    const externalFormData = new FormData();
+    externalFormData.append("zip_file", zipFile);
+
     const externalApiResponse = await fetch(externalApiUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.API_KEY}`
-      },
-      body: JSON.stringify({ logs }),
-    })
+      headers: {},
+      body: externalFormData,
+    });
 
     if (!externalApiResponse.ok) {
-      throw new Error(`External API responded with status: ${externalApiResponse.status}`)
+      const errorData = await externalApiResponse.json().catch(() => null);
+      throw new Error(
+        `External API responded with status: ${externalApiResponse.status}${
+          errorData ? ` - ${JSON.stringify(errorData)}` : ""
+        }`
+      );
     }
-    */
-
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
 
     return NextResponse.json({
       success: true,
-      message: `Successfully processed ${logs.length} log files`,
-    })
+      message: "Logs uploaded successfully",
+    });
   } catch (error) {
-    console.error("Error processing logs:", error)
+    console.error("Error processing logs:", error);
     return NextResponse.json(
-      { error: "Failed to process logs", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    )
+      {
+        error: "Failed to process logs",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
