@@ -98,3 +98,18 @@ async def get_latest_log(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500, detail=f"Error retrieving latest log: {str(e)}"
         )
+
+
+@router.delete("/{id}", response_model=dict)
+async def delete_log_by_id(id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint to delete a log file by its id
+    """
+    try:
+        db.query(LogFile).filter(LogFile.id == id).delete()
+        db.commit()
+        return {"message": f"Log file with id {id} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting log file: {str(e)}"
+        )
