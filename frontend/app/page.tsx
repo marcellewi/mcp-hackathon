@@ -1,151 +1,151 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Search, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import JSZip from "jszip"
+import { useState } from "react";
+import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import JSZip from "jszip";
 
 type LogFile = {
-  name: string
-  content: string
-}
+  name: string;
+  content: string;
+};
 
 export default function LogUploader() {
-  const [isDragging, setIsDragging] = useState(false)
-  const [files, setFiles] = useState<File[]>([])
-  const [extractedLogs, setExtractedLogs] = useState<LogFile[]>([])
-  const [isExtracting, setIsExtracting] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle")
-  const [errorMessage, setErrorMessage] = useState("")
-  const [activeTab, setActiveTab] = useState<"upload" | "visualize">("upload")
-  const [selectedLogIndex, setSelectedLogIndex] = useState(0)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [highlightedLines, setHighlightedLines] = useState<number[]>([])
+  const [isDragging, setIsDragging] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [extractedLogs, setExtractedLogs] = useState<LogFile[]>([]);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"upload" | "visualize">("upload");
+  const [selectedLogIndex, setSelectedLogIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
+    e.preventDefault();
+    setIsDragging(false);
+  };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
+    e.preventDefault();
+    setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files)
-    const zipFiles = droppedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"))
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const zipFiles = droppedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"));
 
     if (zipFiles.length === 0) {
-      setErrorMessage("Please upload a zip file")
-      setUploadStatus("error")
-      return
+      setErrorMessage("Please upload a zip file");
+      setUploadStatus("error");
+      return;
     }
 
-    setFiles(zipFiles)
-    setUploadStatus("idle")
-    setErrorMessage("")
-  }
+    setFiles(zipFiles);
+    setUploadStatus("idle");
+    setErrorMessage("");
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files)
-      const zipFiles = selectedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"))
+      const selectedFiles = Array.from(e.target.files);
+      const zipFiles = selectedFiles.filter((file) => file.type === "application/zip" || file.name.endsWith(".zip"));
 
       if (zipFiles.length === 0) {
-        setErrorMessage("Please upload a zip file")
-        setUploadStatus("error")
-        return
+        setErrorMessage("Please upload a zip file");
+        setUploadStatus("error");
+        return;
       }
 
-      setFiles(zipFiles)
-      setUploadStatus("idle")
-      setErrorMessage("")
+      setFiles(zipFiles);
+      setUploadStatus("idle");
+      setErrorMessage("");
     }
-  }
+  };
 
   const extractLogs = async () => {
-    if (files.length === 0) return
+    if (files.length === 0) return;
 
-    setIsExtracting(true)
-    setExtractedLogs([])
+    setIsExtracting(true);
+    setExtractedLogs([]);
 
     try {
-      const extractedFiles: LogFile[] = []
+      const extractedFiles: LogFile[] = [];
 
       for (const file of files) {
-        const zip = new JSZip()
-        const contents = await zip.loadAsync(file)
+        const zip = new JSZip();
+        const contents = await zip.loadAsync(file);
 
         const filePromises = Object.keys(contents.files).map(async (filename) => {
-          const zipEntry = contents.files[filename]
+          const zipEntry = contents.files[filename];
 
           // Skip directories
-          if (zipEntry.dir) return
+          if (zipEntry.dir) return;
 
           // Check if it's a log file (you can customize this check)
           if (filename.endsWith(".log") || filename.endsWith(".txt") || true) {
-            const content = await zipEntry.async("string")
+            const content = await zipEntry.async("string");
             extractedFiles.push({
               name: filename,
               content,
-            })
+            });
           }
-        })
+        });
 
-        await Promise.all(filePromises)
+        await Promise.all(filePromises);
       }
 
-      setExtractedLogs(extractedFiles)
+      setExtractedLogs(extractedFiles);
 
       // If logs were extracted, switch to visualize tab
       if (extractedFiles.length > 0) {
-        setActiveTab("visualize")
-        setSelectedLogIndex(0)
+        setActiveTab("visualize");
+        setSelectedLogIndex(0);
       }
     } catch (error) {
-      console.error("Error extracting logs:", error)
-      setErrorMessage("Failed to extract logs from the zip file")
-      setUploadStatus("error")
+      console.error("Error extracting logs:", error);
+      setErrorMessage("Failed to extract logs from the zip file");
+      setUploadStatus("error");
     } finally {
-      setIsExtracting(false)
+      setIsExtracting(false);
     }
-  }
+  };
 
   const uploadLogs = async () => {
     if (extractedLogs.length === 0) {
-      setErrorMessage("No logs to upload")
-      setUploadStatus("error")
-      return
+      setErrorMessage("No logs to upload");
+      setUploadStatus("error");
+      return;
     }
 
-    setIsUploading(true)
-    setUploadProgress(0)
-    setUploadStatus("idle")
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("idle");
 
     try {
       // Replace with your actual API endpoint
-      const apiUrl = "/api/upload-logs"
+      const apiUrl = "/api/upload-logs";
 
       // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
-          const newProgress = prev + 5
-          return newProgress > 90 ? 90 : newProgress
-        })
-      }, 200)
+          const newProgress = prev + 5;
+          return newProgress > 90 ? 90 : newProgress;
+        });
+      }, 200);
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -153,88 +153,85 @@ export default function LogUploader() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ logs: extractedLogs }),
-      })
+      });
 
-      clearInterval(progressInterval)
+      clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`)
+        throw new Error(`API responded with status: ${response.status}`);
       }
 
-      setUploadProgress(100)
-      setUploadStatus("success")
+      setUploadProgress(100);
+      setUploadStatus("success");
     } catch (error) {
-      console.error("Error uploading logs:", error)
-      setErrorMessage(error instanceof Error ? error.message : "Failed to upload logs")
-      setUploadStatus("error")
+      console.error("Error uploading logs:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Failed to upload logs");
+      setUploadStatus("error");
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const resetUpload = () => {
-    setFiles([])
-    setExtractedLogs([])
-    setUploadProgress(0)
-    setUploadStatus("idle")
-    setErrorMessage("")
-    setActiveTab("upload")
-    setSelectedLogIndex(0)
-    setSearchQuery("")
-    setHighlightedLines([])
-  }
+    setFiles([]);
+    setExtractedLogs([]);
+    setUploadProgress(0);
+    setUploadStatus("idle");
+    setErrorMessage("");
+    setActiveTab("upload");
+    setSelectedLogIndex(0);
+    setSearchQuery("");
+    setHighlightedLines([]);
+  };
 
   const handleSearch = () => {
     if (!searchQuery.trim() || !extractedLogs[selectedLogIndex]) {
-      setHighlightedLines([])
-      return
+      setHighlightedLines([]);
+      return;
     }
 
-    const content = extractedLogs[selectedLogIndex].content
-    const lines = content.split("\n")
-    const matchedLineIndices: number[] = []
+    const content = extractedLogs[selectedLogIndex].content;
+    const lines = content.split("\n");
+    const matchedLineIndices: number[] = [];
 
     lines.forEach((line, index) => {
       if (line.toLowerCase().includes(searchQuery.toLowerCase())) {
-        matchedLineIndices.push(index)
+        matchedLineIndices.push(index);
       }
-    })
+    });
 
-    setHighlightedLines(matchedLineIndices)
-  }
+    setHighlightedLines(matchedLineIndices);
+  };
 
   const renderLogContent = () => {
     if (extractedLogs.length === 0 || !extractedLogs[selectedLogIndex]) {
-      return <div className="text-center py-10 text-muted-foreground">No log content to display</div>
+      return <div className="text-center py-10 text-muted-foreground">No log content to display</div>;
     }
 
-    const content = extractedLogs[selectedLogIndex].content
-    const lines = content.split("\n")
+    const content = extractedLogs[selectedLogIndex].content;
+    const lines = content.split("\n");
 
     return (
       <div className="font-mono text-sm whitespace-pre-wrap">
         {lines.map((line, index) => {
-          const isHighlighted = highlightedLines.includes(index)
+          const isHighlighted = highlightedLines.includes(index);
           return (
-            <div
-              key={index}
-              className={`py-0.5 px-2 ${isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""} ${index % 2 === 0 ? "bg-muted/50" : ""}`}
-            >
+            <div key={index} className={`py-0.5 px-2 ${isHighlighted ? "bg-yellow-100 dark:bg-yellow-900/30" : ""} ${index % 2 === 0 ? "bg-muted/50" : ""}`}>
               <span className="inline-block w-10 text-muted-foreground mr-2 text-right select-none">{index + 1}</span>
               {line || " "}
             </div>
-          )
+          );
         })}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="container mx-auto py-10 px-4">
       <Card className="w-full max-w-5xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">Log File Uploader & Visualizer</CardTitle>
-          <CardDescription>Upload a zip file containing logs to view, analyze, and send to the API</CardDescription>
+          <CardTitle className="text-2xl">Manual Context Manager</CardTitle>
+          <CardDescription>Easily manage the context you provide to LLMs to improve workflow efficiency and response quality</CardDescription>
         </CardHeader>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "upload" | "visualize")}>
           <div className="px-6">
@@ -250,9 +247,7 @@ export default function LogUploader() {
             <CardContent className="space-y-6 pt-6">
               {/* File Upload Area */}
               <div
-                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
-                  isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-                }`}
+                className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -260,9 +255,7 @@ export default function LogUploader() {
               >
                 <input id="file-upload" type="file" accept=".zip" className="hidden" onChange={handleFileChange} />
                 <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-1">
-                  {isDragging ? "Drop your zip file here" : "Drag & drop your zip file here"}
-                </h3>
+                <h3 className="text-lg font-medium mb-1">{isDragging ? "Drop your zip file here" : "Drag & drop your zip file here"}</h3>
                 <p className="text-sm text-muted-foreground mb-2">or click to browse files</p>
                 {files.length > 0 && (
                   <div className="mt-4 p-2 bg-muted rounded-md inline-block">
@@ -319,7 +312,7 @@ export default function LogUploader() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between mt-4">
               <Button variant="outline" onClick={resetUpload} disabled={isExtracting || isUploading}>
                 Reset
               </Button>
@@ -334,10 +327,7 @@ export default function LogUploader() {
                     "Extract Logs"
                   )}
                 </Button>
-                <Button
-                  onClick={uploadLogs}
-                  disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
-                >
+                <Button onClick={uploadLogs} disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}>
                   {isUploading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -358,29 +348,17 @@ export default function LogUploader() {
                   {/* Log Navigation */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSelectedLogIndex((prev) => Math.max(0, prev - 1))}
-                        disabled={selectedLogIndex === 0}
-                      >
+                      <Button variant="outline" size="icon" onClick={() => setSelectedLogIndex((prev) => Math.max(0, prev - 1))} disabled={selectedLogIndex === 0}>
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <div className="text-sm font-medium">
                         File {selectedLogIndex + 1} of {extractedLogs.length}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSelectedLogIndex((prev) => Math.min(extractedLogs.length - 1, prev + 1))}
-                        disabled={selectedLogIndex === extractedLogs.length - 1}
-                      >
+                      <Button variant="outline" size="icon" onClick={() => setSelectedLogIndex((prev) => Math.min(extractedLogs.length - 1, prev + 1))} disabled={selectedLogIndex === extractedLogs.length - 1}>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="text-sm font-medium truncate max-w-[50%]">
-                      {extractedLogs[selectedLogIndex]?.name}
-                    </div>
+                    <div className="text-sm font-medium truncate max-w-[50%]">{extractedLogs[selectedLogIndex]?.name}</div>
                   </div>
 
                   {/* Search */}
@@ -395,7 +373,7 @@ export default function LogUploader() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            handleSearch()
+                            handleSearch();
                           }
                         }}
                       />
@@ -405,8 +383,8 @@ export default function LogUploader() {
                           size="icon"
                           className="absolute right-1 top-1 h-7 w-7"
                           onClick={() => {
-                            setSearchQuery("")
-                            setHighlightedLines([])
+                            setSearchQuery("");
+                            setHighlightedLines([]);
                           }}
                         >
                           <X className="h-4 w-4" />
@@ -432,14 +410,11 @@ export default function LogUploader() {
                 </>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setActiveTab("upload")}>
                 Back to Upload
               </Button>
-              <Button
-                onClick={uploadLogs}
-                disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}
-              >
+              <Button onClick={uploadLogs} disabled={extractedLogs.length === 0 || isUploading || uploadStatus === "success"}>
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -454,5 +429,5 @@ export default function LogUploader() {
         </Tabs>
       </Card>
     </div>
-  )
+  );
 }
