@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import CopyButton from "@/components/copy-button";
@@ -23,16 +13,13 @@ export type Contexts = {
   content: string;
 }[];
 
-export default function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [contexts, setContexts] = useState<Contexts>([]);
 
   // Function to fetch contexts
   const fetchContexts = async () => {
     try {
-      const apiBaseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiBaseUrl}/api/logs`);
       if (!response.ok) {
         throw new Error(`Failed to fetch contexts: ${response.status}`);
@@ -66,9 +53,11 @@ export default function AppSidebar({
     <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
-          <Button className="w-full flex items-center justify-center gap-2 mb-2">
-            <PlusIcon className="h-4 w-4" />
-            <span>New Context</span>
+          <Button className="w-full flex items-center justify-center gap-2 mb-2" asChild>
+            <Link href="/">
+              <PlusIcon className="h-4 w-4" />
+              <span>New Context</span>
+            </Link>
           </Button>
         </SidebarGroup>
 
@@ -77,14 +66,9 @@ export default function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               {contexts.map((context) => (
-                <SidebarMenuItem
-                  key={context.id}
-                  className="flex items-center justify-between pr-2"
-                >
+                <SidebarMenuItem key={context.id} className="flex items-center justify-between pr-2">
                   <SidebarMenuButton asChild className="flex-1 mr-2">
-                    <Link href={`/context/${context.id}`}>
-                      {context.filename}
-                    </Link>
+                    <Link href={`/context/${context.id}`}>{context.filename}</Link>
                   </SidebarMenuButton>
                   <CopyButton id={context.id.toString()} />
                 </SidebarMenuItem>
