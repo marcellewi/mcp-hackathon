@@ -21,27 +21,25 @@ class LogService:
 
         saved_files = []
 
-        print(f"Opening zip file for extraction")
+        print("Opening zip file for extraction")
         # Extract all txt files
         with zipfile.ZipFile(temp_zip_path, "r") as zip_ref:
             file_list = zip_ref.infolist()
             print(f"Found {len(file_list)} files in zip archive")
 
             for file_info in file_list:
-                if file_info.filename.endswith(".txt"):
-                    print(f"Processing text file: {file_info.filename}")
-                    with zip_ref.open(file_info.filename) as file:
-                        content = file.read().decode("utf-8", errors="ignore")
+                # Process all files, not just .txt files
+                print(f"Processing file: {file_info.filename}")
+                with zip_ref.open(file_info.filename) as file:
+                    content = file.read().decode("utf-8", errors="ignore")
 
-                    log_file = LogFile(
-                        filename=os.path.basename(file_info.filename), content=content
-                    )
+                log_file = LogFile(
+                    filename=os.path.basename(file_info.filename), content=content
+                )
 
-                    print(f"Adding log file to database: {log_file.filename}")
-                    db.add(log_file)
-                    saved_files.append(file_info.filename)
-                else:
-                    print(f"Skipping non-text file: {file_info.filename}")
+                print(f"Adding log file to database: {log_file.filename}")
+                db.add(log_file)
+                saved_files.append(file_info.filename)
 
         print(f"Committing {len(saved_files)} log files to database")
         db.commit()
