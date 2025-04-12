@@ -24,23 +24,18 @@ class LogService:
         with zipfile.ZipFile(temp_zip_path, "r") as zip_ref:
             for file_info in zip_ref.infolist():
                 if file_info.filename.endswith(".txt"):
-                    # Extract the file content
                     with zip_ref.open(file_info.filename) as file:
                         content = file.read().decode("utf-8", errors="ignore")
 
-                    # Create a new log file record
                     log_file = LogFile(
                         filename=os.path.basename(file_info.filename), content=content
                     )
 
-                    # Add to the session
                     db.add(log_file)
                     saved_files.append(file_info.filename)
 
-        # Commit the changes
         db.commit()
 
-        # Clean up
         os.remove(temp_zip_path)
 
         return saved_files
