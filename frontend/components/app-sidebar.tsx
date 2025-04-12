@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -13,18 +15,52 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import CopyButton from "@/components/copy-button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
 export type Contexts = {
   id: number;
   filename: string;
   content: string;
 }[];
 
-export async function AppSidebar({
+export default function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const contexts = (await fetch(`${process.env.API_URL}/api/logs`).then((res) =>
-    res.json()
-  )) as Contexts;
+  const [contexts, setContexts] = useState<Contexts>([]);
+
+  // Function to fetch contexts
+  const fetchContexts = async () => {
+    try {
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiBaseUrl}/api/logs`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch contexts: ${response.status}`);
+      }
+      const data = await response.json();
+      setContexts(data);
+    } catch (error) {
+      console.error("Failed to fetch contexts:", error);
+    }
+  };
+
+  // Initial load of contexts
+  useEffect(() => {
+    fetchContexts();
+  }, []);
+
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefreshContexts = () => {
+      fetchContexts();
+    };
+
+    window.addEventListener("refreshContexts", handleRefreshContexts);
+
+    return () => {
+      window.removeEventListener("refreshContexts", handleRefreshContexts);
+    };
+  }, []);
 
   return (
     <Sidebar {...props}>
@@ -42,7 +78,7 @@ export async function AppSidebar({
             <SidebarMenu>
               {contexts.map((context) => (
                 <SidebarMenuItem
-                  key={context.filename}
+                  key={context.id}
                   className="flex items-center justify-between pr-2"
                 >
                   <SidebarMenuButton asChild className="flex-1 mr-2">

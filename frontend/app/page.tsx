@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import JSZip from "jszip";
+import { useToast } from "@/components/ui/use-toast";
 
 type LogFile = {
   name: string;
@@ -49,6 +50,7 @@ export default function LogUploader() {
   const [selectedLogIndex, setSelectedLogIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedLines, setHighlightedLines] = useState<number[]>([]);
+  const { toast } = useToast();
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -148,6 +150,11 @@ export default function LogUploader() {
       console.error("Error extracting logs:", error);
       setErrorMessage("Failed to extract logs from the zip file");
       setUploadStatus("error");
+      toast({
+        title: "Extraction Failed",
+        description: "Failed to extract logs from the zip file",
+        variant: "destructive",
+      });
     } finally {
       setIsExtracting(false);
     }
@@ -165,8 +172,10 @@ export default function LogUploader() {
     setUploadStatus("idle");
 
     try {
-      // Replace with your actual API endpoint
-      const apiUrl = `http://localhost:8000/api/logs/upload-logs/`;
+      // Get the API URL from environment variables
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const apiUrl = `${apiBaseUrl}/api/logs/upload-logs/`;
 
       // Create a new JSZip instance
       const zip = new JSZip();
@@ -198,6 +207,16 @@ export default function LogUploader() {
 
       setUploadProgress(100);
       setUploadStatus("success");
+
+      // Refresh contexts by triggering a reload of context data
+      try {
+        // Force refresh by reloading the sidebar data
+        const event = new CustomEvent("refreshContexts");
+        window.dispatchEvent(event);
+      } catch (refreshError) {
+        console.error("Error refreshing contexts:", refreshError);
+        // Don't fail the main upload operation if context refresh fails
+      }
     } catch (error) {
       console.error("Error uploading logs:", error);
       setErrorMessage(

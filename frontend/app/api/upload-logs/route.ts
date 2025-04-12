@@ -9,16 +9,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Make sure the URL ends with a trailing slash to match the backend route
-    const externalApiUrl = "http://localhost:8000/api/logs/upload-logs/";
+    // Get the API URL from environment variables
+    const externalApiUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const logsEndpoint = `${externalApiUrl}/api/logs/upload-logs/`;
 
     // Create a new FormData to send the file
     const externalFormData = new FormData();
     externalFormData.append("zip_file", zipFile);
 
-    console.log("Sending request to:", externalApiUrl);
+    console.log("Sending request to:", logsEndpoint);
 
-    const externalApiResponse = await fetch(externalApiUrl, {
+    const externalApiResponse = await fetch(logsEndpoint, {
       method: "POST",
       body: externalFormData,
     });
