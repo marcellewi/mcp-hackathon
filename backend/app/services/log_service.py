@@ -1,10 +1,9 @@
 import os
 import zipfile
 
-from sqlalchemy.orm import Session
-
 from app.config import TEMP_DIR
 from app.database.models import LogFile
+from sqlalchemy.orm import Session
 
 
 class LogService:
@@ -45,3 +44,10 @@ class LogService:
         os.remove(temp_zip_path)
 
         return saved_files
+
+    @staticmethod
+    def get_all_logs(db: Session):
+        """
+        Retrieve all log files from the database
+        """
+        return db.query(LogFile).all()
