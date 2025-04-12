@@ -172,10 +172,8 @@ export default function LogUploader() {
     setUploadStatus("idle");
 
     try {
-      // Get the API URL from environment variables
-      const apiBaseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const apiUrl = `${apiBaseUrl}/api/logs/upload-logs/`;
+      // Replace with your actual API endpoint
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/logs/upload-logs/`;
 
       // Create a new JSZip instance
       const zip = new JSZip();
