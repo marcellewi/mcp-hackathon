@@ -13,10 +13,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  FolderOpen,
-  Folder,
-  FileText,
-  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -346,7 +342,7 @@ export default function LogUploader() {
         const zipName = `${firstFilePrefix}_${dateStr}`;
 
         // Add each log file to the zip with proper structure
-        extractedLogs.forEach((log, index) => {
+        extractedLogs.forEach((log) => {
           // For files already in a folder structure, preserve it
           // For loose files, don't add any prefix
           const filePath = log.parentZip
@@ -480,13 +476,6 @@ export default function LogUploader() {
         })}
       </div>
     );
-  };
-
-  const toggleFolder = (folderName: string) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderName]: !prev[folderName],
-    }));
   };
 
   return (
