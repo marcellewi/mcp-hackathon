@@ -779,7 +779,26 @@ export default function LogUploader() {
           </TabsContent>
 
           <TabsContent value="github">
-            {/* GitHub content */}
+            <CardContent className="space-y-6 pt-6">
+              <div className="space-y-2">
+                <label htmlFor="github-url" className="text-sm font-medium">
+                  GitHub Repository URL
+                </label>
+                <div className="flex gap-2">
+                  <Input id="github-url" placeholder="https://github.com/owner/repo" value={githubUrl} onChange={handleGithubUrlChange} disabled={isFetchingTree} />
+                  <Button onClick={addAndNavigateToRepo} disabled={!githubUrl || isFetchingTree}>
+                    {isFetchingTree ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
+                      </>
+                    ) : (
+                      "Add Repository"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Provide a GitHub URL to select files for context.</p>
+              </div>
+            </CardContent>
           </TabsContent>
         </Tabs>
       </Card>
