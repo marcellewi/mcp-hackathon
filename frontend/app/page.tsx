@@ -550,26 +550,8 @@ export default function LogUploader() {
                 </Button>
                 <SentryLogButton 
                   onLogsLoaded={() => {
-                    setActiveTab("visualize");
-                    // Fetch the latest logs to update the UI
-                    fetch("http://localhost:8000/api/logs/latest")
-                      .then(res => res.json())
-                      .then(data => {
-                        const newLogs = data.map((log: any) => ({
-                          name: log.filename,
-                          content: log.content,
-                          parentZip: log.filename.startsWith("sentry/") ? "Sentry Logs" : undefined
-                        }));
-                        setExtractedLogs(prevLogs => [...newLogs, ...prevLogs]);
-                      })
-                      .catch(err => {
-                        console.error("Error fetching latest logs:", err);
-                        toast({
-                          title: "Error",
-                          description: "Failed to refresh logs after Sentry sync",
-                          variant: "destructive",
-                        });
-                      });
+                    // Don't navigate or fetch logs, just show the success toast
+                    console.log("Sentry logs loaded");
                   }}
                 />
               </div>

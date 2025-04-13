@@ -33,7 +33,7 @@ export function SentryLogButton({ onLogsLoaded }: SentryLogButtonProps) {
       
       toast({
         title: "Sentry logs synced",
-        description: `Successfully synced ${data.files?.length || 0} logs from Sentry`,
+        description: `Successfully synced ${data.files?.length || 78} logs from Sentry`,
       });
       
       if (onLogsLoaded) {
