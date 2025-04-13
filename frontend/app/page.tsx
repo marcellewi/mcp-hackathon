@@ -552,10 +552,10 @@ export default function LogUploader() {
                   onLogsLoaded={() => {
                     setActiveTab("visualize");
                     // Fetch the latest logs to update the UI
-                    fetch("http://localhost:8000/logs/latest")
+                    fetch("http://localhost:8000/api/logs/latest")
                       .then(res => res.json())
                       .then(data => {
-                        const newLogs = data.map((log) => ({
+                        const newLogs = data.map((log: any) => ({
                           name: log.filename,
                           content: log.content,
                           parentZip: log.filename.startsWith("sentry/") ? "Sentry Logs" : undefined

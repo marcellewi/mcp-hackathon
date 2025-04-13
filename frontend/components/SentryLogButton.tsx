@@ -18,21 +18,22 @@ export function SentryLogButton({ onLogsLoaded }: SentryLogButtonProps) {
     setIsLoading(true);
     
     try {
-      // Hardcoded backend URL for MVP
-      const response = await fetch('http://localhost:8000/api/logs/sentry/sync', {
+      // Use environment variable for API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/logs/sentry/sync`, {
         method: 'POST',
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to fetch Sentry logs');
+        const errorData = await response.json().catch(() => ({ detail: `HTTP error: ${response.status}` }));
+        throw new Error(errorData.detail || 'Failed to fetch Sentry logs');
       }
       
       const data = await response.json();
       
       toast({
         title: "Sentry logs synced",
-        description: `Successfully synced ${data.files.length} logs from Sentry`,
+        description: `Successfully synced ${data.files?.length || 0} logs from Sentry`,
       });
       
       if (onLogsLoaded) {

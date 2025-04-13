@@ -1,6 +1,7 @@
 import json
 from typing import List
 
+import httpx
 from app.database import get_db
 from app.database.models import LogFile
 from app.services.log_service import LogService
@@ -155,6 +156,10 @@ async def sync_sentry_logs(db: Session = Depends(get_db)):
     try:
         # Get issues from Sentry
         issues = SentryService.get_sentry_issues(limit=100)
+
+        if not issues:
+            return {"message": "No Sentry issues found", "files": []}
+
         saved_files = []
 
         # For each issue, get events and save them as log files
@@ -184,7 +189,17 @@ async def sync_sentry_logs(db: Session = Depends(get_db)):
             "message": f"Synced {len(saved_files)} Sentry logs",
             "files": saved_files,
         }
+    except ValueError as e:
+        # Catch the explicit ValueError from SentryService.get_credentials
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Sentry configuration error: {str(e)}"
+        )
+    except httpx.HTTPStatusError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Sentry API error: {str(e)}")
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=500, detail=f"Error syncing Sentry logs: {str(e)}"
         )

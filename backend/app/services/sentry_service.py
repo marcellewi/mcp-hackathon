@@ -9,13 +9,12 @@ class SentryService:
     @staticmethod
     def get_credentials():
         """Get Sentry credentials from environment variables"""
-        token = os.getenv("SENTRY_AUTH_TOKEN", "")
+        token = os.getenv("SENTRY_AUTH_TOKEN")
         org = os.getenv("SENTRY_ORG", "franco-galeano")
         project = os.getenv("SENTRY_PROJECT", "metria-back")
 
         if not token:
-            # Fall back to hardcoded token if env var not set
-            token = "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"
+            raise ValueError("SENTRY_AUTH_TOKEN environment variable is not set")
 
         return token, org, project
 
