@@ -2,17 +2,18 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
-import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { SentryLogButton } from "@/components/SentryLogButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import JSZip from "jszip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import JSZip from "jszip";
+import { AlertCircle, CheckCircle, ChevronLeft, ChevronRight, FileUp, Loader2, Search, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type LogFile = {
   name: string;
@@ -318,7 +319,7 @@ export default function LogUploader() {
         const zipName = `${firstFilePrefix}_${dateStr}`;
 
         // Add each log file to the zip with proper structure
-        extractedLogs.forEach((log) => {
+        extractedLogs.forEach((log, index) => {
           // For files already in a folder structure, preserve it
           // For loose files, don't add any prefix
           const filePath = log.parentZip ? `${log.parentZip}/${log.name}` : log.name;
@@ -383,12 +384,6 @@ export default function LogUploader() {
     setSelectedLogIndex(0);
     setSearchQuery("");
     setHighlightedLines([]);
-
-    // Reset the file input element itself
-    const fileInput = document.getElementById("file-upload") as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = "";
-    }
   };
 
   const handleSearch = () => {
@@ -502,11 +497,11 @@ export default function LogUploader() {
         >
           <div className="px-6">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="upload">Upload Files</TabsTrigger>
-              <TabsTrigger value="github">From GitHub</TabsTrigger>
+              <TabsTrigger value="upload">Upload</TabsTrigger>
               <TabsTrigger value="visualize" disabled={extractedLogs.length === 0}>
-                Visualize Files
+                Visualize Logs
               </TabsTrigger>
+              <TabsTrigger value="github">GitHub</TabsTrigger>
             </TabsList>
           </div>
 
@@ -542,6 +537,41 @@ export default function LogUploader() {
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className="flex space-x-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("file-upload")?.click()}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Choose Files
+                </Button>
+                <SentryLogButton 
+                  onLogsLoaded={() => {
+                    setActiveTab("visualize");
+                    // Fetch the latest logs to update the UI
+                    fetch("http://localhost:8000/logs/latest")
+                      .then(res => res.json())
+                      .then(data => {
+                        const newLogs = data.map((log) => ({
+                          name: log.filename,
+                          content: log.content,
+                          parentZip: log.filename.startsWith("sentry/") ? "Sentry Logs" : undefined
+                        }));
+                        setExtractedLogs(prevLogs => [...newLogs, ...prevLogs]);
+                      })
+                      .catch(err => {
+                        console.error("Error fetching latest logs:", err);
+                        toast({
+                          title: "Error",
+                          description: "Failed to refresh logs after Sentry sync",
+                          variant: "destructive",
+                        });
+                      });
+                  }}
+                />
               </div>
 
               {/* Processing and Upload Status */}
@@ -636,29 +666,6 @@ export default function LogUploader() {
                 </Button>
               </div>
             </CardFooter>
-          </TabsContent>
-
-          <TabsContent value="github">
-            <CardContent className="space-y-6 pt-6">
-              <div className="space-y-2">
-                <label htmlFor="github-url" className="text-sm font-medium">
-                  GitHub Repository URL
-                </label>
-                <div className="flex gap-2">
-                  <Input id="github-url" placeholder="https://github.com/owner/repo" value={githubUrl} onChange={handleGithubUrlChange} disabled={isFetchingTree} />
-                  <Button onClick={addAndNavigateToRepo} disabled={!githubUrl || isFetchingTree}>
-                    {isFetchingTree ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
-                      </>
-                    ) : (
-                      "Add Repository"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">Provide a GitHub URL to select files for context.</p>
-              </div>
-            </CardContent>
           </TabsContent>
 
           <TabsContent value="visualize">
@@ -787,6 +794,10 @@ export default function LogUploader() {
                 )}
               </Button>
             </CardFooter>
+          </TabsContent>
+
+          <TabsContent value="github">
+            {/* GitHub content */}
           </TabsContent>
         </Tabs>
       </Card>
