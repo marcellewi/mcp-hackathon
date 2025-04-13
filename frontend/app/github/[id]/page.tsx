@@ -161,8 +161,14 @@ export default function GitHubSelectionPage() {
         throw new Error(errorData.detail || `Failed to update selection: ${response.status}`);
       }
 
-      toast({ title: "Selection Updated Successfully" });
-      // Optionally trigger sidebar refresh or navigate away
+      // Copy selection ID to clipboard
+      await navigator.clipboard.writeText(selectionId);
+
+      toast({
+        title: "Selection Updated Successfully",
+        description: "Selection ID copied to clipboard",
+      });
+
       // Refresh sidebar data
       const event = new CustomEvent("refreshContexts");
       window.dispatchEvent(event);

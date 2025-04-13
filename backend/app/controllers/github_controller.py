@@ -7,15 +7,17 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Query, Body, Path
 from pydantic import BaseModel, HttpUrl
 from typing import List, Optional
+import dotenv
 
 from app.database import get_db
 from app.database.models import GitHubSelection
 from sqlalchemy.orm import Session
 
 router = APIRouter()
+dotenv.load_dotenv()
 
 GITHUB_API_URL = "https://api.github.com"
-# Consider adding a GITHUB_TOKEN env variable for higher rate limits
+# Get GitHub token from environment variables
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 headers = {
@@ -24,7 +26,10 @@ headers = {
 }
 if GITHUB_TOKEN:
     headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+else:
+    print("Warning: GITHUB_TOKEN not found in environment variables. API rate limits will be restricted.")
 
+print(f"GitHub token: {GITHUB_TOKEN}")
 class GitHubTreeNode(BaseModel):
     path: str
     mode: str

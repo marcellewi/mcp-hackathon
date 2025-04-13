@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const selectionId = params.id;
+  const selectionId = await params.id;
 
   if (!selectionId) {
     return NextResponse.json({ detail: "Selection ID is required" }, { status: 400 });
