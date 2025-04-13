@@ -89,7 +89,7 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
 
         if (!structure[folderName]) {
           console.log(`Creating new folder: ${folderName}`);
-          structure[folderName] = { files: [], isExpanded: true };
+          structure[folderName] = { files: [], isExpanded: false }; // Default to closed
         }
 
         structure[folderName].files.push(file);

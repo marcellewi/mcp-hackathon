@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, GithubIcon, ExternalLinkIcon } from "lucide-react";
+import { Loader2, GithubIcon, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import Link from "next/link";
 
 // Types mirroring backend Pydantic models
@@ -184,6 +184,25 @@ export default function GitHubSelectionPage() {
     }
   };
 
+  // Handle copying the selection ID
+  const copySelectionId = async () => {
+    if (!selectionId) return;
+    try {
+      await navigator.clipboard.writeText(selectionId);
+      toast({
+        title: "Selection ID Copied",
+        description: `Selection id copied to clipboard.`,
+      });
+    } catch (err) {
+      console.error("Failed to copy ID: ", err);
+      toast({
+        title: "Failed to Copy ID",
+        description: "Could not copy the ID to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // --- Render Logic ---
 
   if (isLoading) {
@@ -211,11 +230,14 @@ export default function GitHubSelectionPage() {
               <CardTitle className="text-2xl flex items-center gap-2">
                 <GithubIcon className="h-6 w-6" /> {selectionDetails.name}
               </CardTitle>
-              <CardDescription className="mt-1">
+              <CardDescription className="mt-1 flex items-center flex-wrap gap-x-2 gap-y-1">
                 Select files from this repository to include in the context.
-                <Link href={selectionDetails.url} target="_blank" rel="noopener noreferrer" className="ml-2 text-primary hover:underline inline-flex items-center gap-1 text-xs">
+                <Link href={selectionDetails.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
                   <ExternalLinkIcon className="h-3 w-3" /> View on GitHub
                 </Link>
+                <Button variant="outline" size="sm" onClick={copySelectionId} className="inline-flex items-center gap-1">
+                  <CopyIcon className="h-3 w-3" /> Copy ID
+                </Button>
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => router.push("/")}>
