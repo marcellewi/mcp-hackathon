@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
+import Image from "next/image";
 
 export type Contexts = {
   id: number;
@@ -174,6 +175,9 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
     <Sidebar {...props}>
       <SidebarContent>
         <SidebarGroup>
+          <div className="flex justify-center mb-2">
+            <Image src="/logo.png" alt="Logo" width={72} height={72} objectFit="contain" />
+          </div>
           <Button className="w-full flex items-center justify-center gap-2 mb-2" asChild>
             <Link href="/">
               <PlusIcon className="h-4 w-4" />
