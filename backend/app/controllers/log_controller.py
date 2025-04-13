@@ -1,18 +1,20 @@
+import json
 from typing import List
 
+import httpx
 from app.database import get_db
 from app.database.models import LogFile
 from app.services.log_service import LogService
+from app.services.sentry_service import SentryService
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from pydantic import BaseModel
-from typing import List
-from fastapi import Body
 
 class LogInput(BaseModel):
     filename: str
     content: str
+
 
 router = APIRouter()
 
@@ -35,9 +37,7 @@ async def upload_logs(file: UploadFile = File(...), db: Session = Depends(get_db
         saved_files = LogService.process_file(content, file.filename, db)
         return saved_files
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error processing file: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
 
 @router.get("/", response_model=List[dict])
@@ -117,6 +117,7 @@ async def delete_log_by_id(id: int, db: Session = Depends(get_db)):
             status_code=500, detail=f"Error deleting log file: {str(e)}"
         )
 
+
 @router.post("/upload-json-logs/", response_model=dict)
 async def upload_json_logs(logs: List[LogInput], db: Session = Depends(get_db)):
     """
@@ -131,3 +132,74 @@ async def upload_json_logs(logs: List[LogInput], db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error uploading logs: {str(e)}")
+
+
+@router.get("/sentry/issues", response_model=List[dict])
+async def get_sentry_issues(limit: int = 100):
+    """
+    Endpoint to retrieve issues from Sentry
+    """
+    try:
+        issues = SentryService.get_sentry_issues(limit)
+        return issues
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving Sentry issues: {str(e)}"
+        )
+
+
+@router.post("/sentry/sync", response_model=dict)
+async def sync_sentry_logs(db: Session = Depends(get_db)):
+    """
+    Endpoint to sync Sentry logs to the database
+    """
+    try:
+        # Get issues from Sentry
+        issues = SentryService.get_sentry_issues(limit=100)
+
+        if not issues:
+            return {"message": "No Sentry issues found", "files": []}
+
+        saved_files = []
+
+        # For each issue, get events and save them as log files
+        for issue in issues:
+            issue_id = issue.get("id")
+            if not issue_id:
+                continue
+
+            events = SentryService.get_issue_events(issue_id)
+
+            for event in events:
+                # Create a structured log file name
+                event_id = event.get("eventID", "unknown")
+                title = issue.get("title", "unknown").replace(" ", "_")[:30]
+                filename = f"sentry/{title}/{event_id}.json"
+
+                # Convert event to string
+                content = json.dumps(event, indent=2)
+
+                # Save to database
+                log_file = LogFile(filename=filename, content=content)
+                db.add(log_file)
+                saved_files.append(filename)
+
+        db.commit()
+        return {
+            "message": f"Synced {len(saved_files)} Sentry logs",
+            "files": saved_files,
+        }
+    except ValueError as e:
+        # Catch the explicit ValueError from SentryService.get_credentials
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Sentry configuration error: {str(e)}"
+        )
+    except httpx.HTTPStatusError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Sentry API error: {str(e)}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Error syncing Sentry logs: {str(e)}"
+        )
