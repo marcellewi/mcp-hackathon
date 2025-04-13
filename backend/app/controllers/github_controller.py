@@ -7,14 +7,20 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Query, Body, Path
 from pydantic import BaseModel, HttpUrl
 from typing import List, Optional
-import dotenv
 
 from app.database import get_db
 from app.database.models import GitHubSelection
 from sqlalchemy.orm import Session
 
+from pydantic import BaseModel
+from typing import List
+from fastapi import Body
+
+class LogInput(BaseModel):
+    filename: str
+    content: str
+
 router = APIRouter()
-dotenv.load_dotenv()
 
 GITHUB_API_URL = "https://api.github.com"
 # Get GitHub token from environment variables
@@ -193,3 +199,18 @@ async def update_github_file_selection(
         db.rollback()
         print(f"Error updating GitHub selection: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update selection: {str(e)}")
+
+@router.post("/upload-json-logs/", response_model=dict)
+async def upload_json_logs(logs: List[LogInput], db: Session = Depends(get_db)):
+    """
+    Endpoint to upload multiple logs via JSON (filename + content).
+    """
+    try:
+        for log in logs:
+            new_log = LogFile(filename=log.filename, content=log.content)
+            db.add(new_log)
+        db.commit()
+        return {"message": f"{len(logs)} logs uploaded successfully."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error uploading logs: {str(e)}")

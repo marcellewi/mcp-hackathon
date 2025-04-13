@@ -3,14 +3,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import fetch from "node-fetch";
 import { Buffer } from "buffer";
-import dotenv from "dotenv";
-
-dotenv.config();
+import fs from "fs";
+import path from "path";
 
 const server = new McpServer({
   name: "Log & GitHub Retrieval MCP",
   version: "1.0.0",
 });
+
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8001";
 
 const LOG_API_BASE_URL = `${process.env.LOG_API_URL ?? "http://localhost:8001"}/api/logs`;
 const GITHUB_API_BASE_URL = `${process.env.MAIN_BACKEND_API_URL ?? "http://localhost:8001"}/api/github`;
@@ -332,6 +333,100 @@ server.tool(
   },
   {
     description: "Get multiple log files by their IDs",
+  }
+);
+
+// Tool to upload logs from a local folder
+server.tool(
+  "getFolderLogLocal",
+  {
+    folderPath: z.string().default("logs"),
+    uriGet: z.string().default(`${API_BASE_URL}/api/logs`),
+    uriPost: z.string().default(`${API_BASE_URL}/api/logs/upload-json-logs/`),
+  },
+  async ({ folderPath, uriGet, uriPost }) => {
+    console.log(`Processing logs from folder: ${folderPath}`);
+    try {
+      // Get existing logs
+      const response = await fetch(uriGet);
+      if (!response.ok) {
+        throw new Error(`Failed to retrieve existing logs: ${response.statusText}`);
+      }
+      const existingLogs = await response.json();
+      console.log(`Retrieved ${existingLogs.length} existing logs`);
+
+      // Prepare logs to upload
+      const logsToUpload = [];
+
+      // Read directory and process each .txt file
+      const files = fs.readdirSync(folderPath);
+      for (const filename of files) {
+        if (filename.endsWith(".txt")) {
+          const filePath = path.join(folderPath, filename);
+          try {
+            const content = fs.readFileSync(filePath, { encoding: "utf-8" });
+            logsToUpload.push({
+              filename: filename,
+              content: content,
+            });
+            console.log(`Prepared log for upload: ${filename} (${content.length} characters)`);
+          } catch (fileError) {
+            console.error(`Error reading ${filename}: ${fileError.message}`);
+          }
+        }
+      }
+
+      // Upload logs
+      if (logsToUpload.length > 0) {
+        const postResponse = await fetch(uriPost, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(logsToUpload),
+        });
+
+        if (!postResponse.ok) {
+          const errorText = await postResponse.text();
+          throw new Error(`Error while uploading logs to ${uriPost}: ${postResponse.status} ${postResponse.statusText} | Response: ${errorText}`);
+        }
+
+        const uploadResult = await postResponse.json();
+        console.log(`✅ Successfully uploaded ${logsToUpload.length} logs.`);
+
+        // Return both the upload result and the log data as context
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully uploaded ${logsToUpload.length} logs from folder ${folderPath}.\n\nUploaded logs:\n${JSON.stringify(logsToUpload, null, 2)}\n\nServer response:\n${JSON.stringify(uploadResult, null, 2)}`,
+            },
+          ],
+        };
+      } else {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No .txt files found in folder ${folderPath}.`,
+            },
+          ],
+        };
+      }
+    } catch (error) {
+      console.error(`Error in getFolderLogLocal: ${error.message}`);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error processing logs from folder: ${error.message}`,
+          },
+        ],
+      };
+    }
+  },
+  {
+    description: "Upload log files from a local folder to the logs API",
   }
 );
 

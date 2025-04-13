@@ -6,6 +6,14 @@ from app.services.log_service import LogService
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from pydantic import BaseModel
+from typing import List
+from fastapi import Body
+
+class LogInput(BaseModel):
+    filename: str
+    content: str
+
 router = APIRouter()
 
 
@@ -108,3 +116,18 @@ async def delete_log_by_id(id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500, detail=f"Error deleting log file: {str(e)}"
         )
+
+@router.post("/upload-json-logs/", response_model=dict)
+async def upload_json_logs(logs: List[LogInput], db: Session = Depends(get_db)):
+    """
+    Endpoint to upload multiple logs via JSON (filename + content).
+    """
+    try:
+        for log in logs:
+            new_log = LogFile(filename=log.filename, content=log.content)
+            db.add(new_log)
+        db.commit()
+        return {"message": f"{len(logs)} logs uploaded successfully."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error uploading logs: {str(e)}")
